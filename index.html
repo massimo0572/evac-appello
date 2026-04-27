@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EVAC — Appello Evacuazione</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg:#0a0c10; --surface:#12161e; --card:#181d27; --border:#232b3a;
+  --accent:#ff3c3c; --accent2:#ff8800; --safe:#00d084;
+  --text:#e8eaf0; --muted:#6b7690;
+  --mono:'DM Mono',monospace; --sans:'DM Sans',sans-serif; --display:'Bebas Neue',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(255,60,60,0.03) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(255,60,60,0.03) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0}
+
+/* HEADER */
+header{position:sticky;top:0;z-index:100;background:rgba(10,12,16,0.93);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--border);
+  padding:0 24px;display:flex;align-items:center;justify-content:space-between;
+  height:64px;gap:12px}
+.logo{display:flex;align-items:baseline;gap:10px}
+.logo-title{font-family:var(--display);font-size:2.2rem;letter-spacing:4px;color:var(--accent);line-height:1}
+.logo-sub{font-family:var(--mono);font-size:0.68rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+.header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);
+  animation:blink 1.2s ease-in-out infinite;box-shadow:0 0 8px var(--accent)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+.timestamp{font-family:var(--mono);font-size:0.75rem;color:var(--muted)}
+
+/* HEADER BUTTONS */
+.hdr-btn{display:flex;align-items:center;gap:7px;border-radius:8px;
+  font-family:var(--mono);font-size:0.72rem;letter-spacing:1px;text-transform:uppercase;
+  padding:8px 14px;cursor:pointer;transition:all 0.15s;white-space:nowrap;border:1px solid}
+.btn-upload{background:rgba(255,136,0,0.12);border-color:var(--accent2);color:var(--accent2)}
+.btn-upload:hover{background:rgba(255,136,0,0.25)}
+.btn-print{background:rgba(0,208,132,0.12);border-color:var(--safe);color:var(--safe)}
+.btn-print:hover{background:rgba(0,208,132,0.25)}
+#fileInput{display:none}
+
+/* MAIN */
+main{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:32px 24px 80px}
+
+/* DROP ZONE */
+.drop-zone{border:2px dashed var(--border);border-radius:16px;padding:70px 32px;
+  text-align:center;margin-bottom:32px;cursor:pointer;
+  transition:border-color 0.2s,background 0.2s;display:none}
+.drop-zone.visible{display:block}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent2);background:rgba(255,136,0,0.05)}
+.drop-icon{font-size:2.8rem;margin-bottom:14px}
+.drop-title{font-family:var(--display);font-size:1.8rem;letter-spacing:3px;color:var(--accent2);margin-bottom:8px}
+.drop-sub{font-family:var(--mono);font-size:0.72rem;color:var(--muted);letter-spacing:1px;line-height:1.8}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:32px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:20px 24px;position:relative;overflow:hidden}
+.stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat-card.danger::after{background:var(--accent)}
+.stat-card.safe::after{background:var(--safe)}
+.stat-card.warn::after{background:var(--accent2)}
+.stat-card.neutral::after{background:var(--muted)}
+.stat-label{font-family:var(--mono);font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.stat-value{font-family:var(--display);font-size:3rem;line-height:1;letter-spacing:2px}
+.stat-card.danger .stat-value{color:var(--accent)}
+.stat-card.safe   .stat-value{color:var(--safe)}
+.stat-card.warn   .stat-value{color:var(--accent2)}
+.stat-card.neutral.stat-value{color:var(--text)}
+
+/* PROGRESS */
+.progress-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:32px}
+.progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.progress-label{font-family:var(--mono);font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.progress-pct{font-family:var(--display);font-size:1.4rem;color:var(--safe);letter-spacing:1px}
+.progress-track{height:10px;background:var(--border);border-radius:99px;overflow:hidden}
+.progress-fill{height:100%;border-radius:99px;transition:width 0.6s cubic-bezier(.4,0,.2,1)}
+
+/* TOOLBAR */
+.toolbar{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.search-wrap{flex:1;min-width:200px;position:relative}
+.search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.search-input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);font-family:var(--mono);font-size:0.85rem;padding:10px 12px 10px 38px;
+  outline:none;transition:border-color 0.2s}
+.search-input::placeholder{color:var(--muted)}
+.search-input:focus{border-color:var(--accent)}
+.filter-btn{background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--muted);
+  font-family:var(--mono);font-size:0.75rem;letter-spacing:1px;text-transform:uppercase;
+  padding:10px 18px;cursor:pointer;transition:all 0.15s}
+.filter-btn:hover{border-color:var(--accent);color:var(--text)}
+.filter-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(255,60,60,0.08)}
+.filter-btn.safe-btn.active{border-color:var(--safe);color:var(--safe);background:rgba(0,208,132,0.08)}
+.reset-btn{background:var(--accent);border:none;border-radius:8px;color:#fff;
+  font-family:var(--mono);font-size:0.75rem;letter-spacing:1px;text-transform:uppercase;
+  padding:10px 20px;cursor:pointer;transition:opacity 0.15s;font-weight:500}
+.reset-btn:hover{opacity:0.85}
+
+/* LIST */
+.list-header{display:grid;grid-template-columns:40px 1fr 140px;gap:16px;padding:8px 16px;margin-bottom:8px}
+.list-header span{font-family:var(--mono);font-size:0.63rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.list-header span:last-child{text-align:center}
+.person-list{display:flex;flex-direction:column;gap:4px}
+.person-row{display:grid;grid-template-columns:40px 1fr 140px;gap:16px;align-items:center;
+  background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;
+  cursor:pointer;transition:border-color 0.15s,background 0.15s;position:relative;overflow:hidden}
+.person-row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;transition:background 0.15s}
+.person-row.present::before{background:var(--safe)}
+.person-row.absent::before{background:var(--accent)}
+.person-row:hover{border-color:#3a4460;background:#1c2130}
+.person-row.present{border-color:rgba(0,208,132,0.2)}
+.person-row.absent{border-color:rgba(255,60,60,0.2)}
+.row-num{font-family:var(--mono);font-size:0.65rem;color:var(--muted);text-align:center}
+.row-name{font-family:var(--sans);font-size:0.9rem;font-weight:600;letter-spacing:0.5px}
+.toggle-wrap{display:flex;justify-content:center}
+.toggle{position:relative;width:52px;height:26px;cursor:pointer}
+.toggle input{display:none}
+.toggle-track{position:absolute;inset:0;border-radius:99px;
+  background:rgba(255,60,60,0.25);border:1px solid var(--accent);transition:background 0.2s,border-color 0.2s}
+.toggle input:checked~.toggle-track{background:rgba(0,208,132,0.25);border-color:var(--safe)}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;
+  background:var(--accent);transition:transform 0.2s,background 0.2s;box-shadow:0 0 6px rgba(255,60,60,0.6)}
+.toggle input:checked~.toggle-track .toggle-thumb{transform:translateX(26px);background:var(--safe);box-shadow:0 0 6px rgba(0,208,132,0.6)}
+.empty{text-align:center;padding:60px 20px;font-family:var(--mono);color:var(--muted);font-size:0.8rem;letter-spacing:2px}
+
+/* ALARM */
+.alarm-banner{position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--accent);color:#fff;
+  display:flex;align-items:center;justify-content:center;gap:12px;padding:14px 24px;
+  font-family:var(--display);font-size:1.4rem;letter-spacing:3px;
+  transform:translateY(100%);transition:transform 0.4s cubic-bezier(.4,0,.2,1)}
+.alarm-banner.visible{transform:translateY(0)}
+
+/* TOAST */
+.toast{position:fixed;top:80px;right:24px;z-index:300;background:var(--card);
+  border:1px solid var(--border);border-radius:10px;padding:14px 20px;
+  font-family:var(--mono);font-size:0.78rem;letter-spacing:1px;color:var(--text);max-width:340px;
+  transform:translateX(120%);transition:transform 0.35s cubic-bezier(.4,0,.2,1);
+  display:flex;align-items:center;gap:10px}
+.toast.show{transform:translateX(0)}
+.toast-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.toast.ok  .toast-dot{background:var(--safe)}
+.toast.err .toast-dot{background:var(--accent)}
+.toast.warn .toast-dot{background:var(--accent2)}
+
+/* ======= PRINT STYLES ======= */
+.print-only{display:none}
+
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  body{background:#fff!important;color:#111!important;font-family:Arial,sans-serif}
+  body::before{display:none}
+  header,.toolbar,.alarm-banner,.toast,.drop-zone,
+  .filter-btn,.reset-btn,.hdr-btn,#fileInput,
+  .toggle-wrap,.progress-wrap{display:none!important}
+  main{padding:0;max-width:100%}
+
+  /* Print header */
+  .print-only{display:block}
+  .print-header{text-align:center;border-bottom:3px solid #111;padding-bottom:16px;margin-bottom:20px}
+  .print-header h1{font-size:1.9rem;letter-spacing:6px;margin-bottom:6px;font-family:Arial Black,Arial,sans-serif}
+  .print-header .ph-sub{font-size:0.78rem;color:#555;margin-bottom:4px}
+  .print-header .ph-src{font-size:0.7rem;color:#888}
+
+  /* Stats in print */
+  .stats{display:grid!important;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+  .stat-card{border:2px solid #ccc!important;border-radius:6px;padding:12px 14px}
+  .stat-card::after{display:none}
+  .stat-label{font-size:0.58rem;color:#666!important;letter-spacing:1px}
+  .stat-value{font-size:1.9rem!important}
+  .stat-card.danger .stat-value{color:#c00!important}
+  .stat-card.safe   .stat-value{color:#007a4d!important}
+  .stat-card.warn   .stat-value{color:#b35900!important}
+  .stat-card.neutral .stat-value{color:#111!important}
+
+  /* List in print */
+  .list-header{grid-template-columns:36px 1fr 90px;padding:6px 10px}
+  .list-header span{font-size:0.58rem;color:#666}
+  .person-list{gap:2px}
+  .person-row{grid-template-columns:36px 1fr 90px;border:1px solid #ddd!important;
+    border-radius:4px;padding:6px 10px;background:#fff!important;break-inside:avoid}
+  .person-row::before{display:none!important}
+  .person-row.present{border-left:4px solid #007a4d!important}
+  .person-row.absent {border-left:4px solid #c00!important}
+  .row-name{font-size:0.8rem;color:#111}
+  .row-num{font-size:0.6rem;color:#888}
+
+  /* Badge replaces toggle */
+  .toggle-wrap{display:none!important}
+  .print-badge-cell{display:flex!important;justify-content:center;align-items:center}
+  .print-badge{font-size:0.62rem;font-weight:700;letter-spacing:1px;padding:3px 8px;border-radius:4px}
+  .print-badge.p{background:#d4f5e9;color:#007a4d}
+  .print-badge.a{background:#ffe4e4;color:#c00}
+
+  /* Absent summary box */
+  .absent-summary{display:block!important;margin-top:22px;page-break-before:auto;
+    padding:14px 18px;border:2px solid #c00;border-radius:8px;background:#fff8f8!important}
+  .absent-summary h2{font-size:0.85rem;color:#c00;letter-spacing:2px;margin-bottom:10px;font-family:Arial,sans-serif}
+  .absent-tags{display:flex;flex-wrap:wrap;gap:6px}
+  .absent-tag{background:#ffe4e4;color:#c00;font-size:0.68rem;padding:3px 8px;border-radius:4px;font-weight:700}
+  .all-present-msg{color:#007a4d;font-weight:700;font-size:0.85rem}
+
+  /* Print footer */
+  .print-footer{display:flex!important;margin-top:24px;border-top:1px solid #ccc;
+    padding-top:12px;font-size:0.68rem;color:#777;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  .pf-sign{border-top:1px solid #aaa;padding-top:4px;min-width:160px;text-align:center;font-size:0.65rem;color:#555}
+}
+
+/* Screen hide print elements */
+.absent-summary,.print-footer,.print-header,.print-badge-cell{display:none}
+
+@media(max-width:600px){
+  .logo-title{font-size:1.6rem}
+  .logo-sub,.timestamp{display:none}
+  .stat-value{font-size:2.2rem}
+  .list-header,.person-row{grid-template-columns:32px 1fr 100px}
+  .hdr-btn span{display:none}
+  .hdr-btn{padding:8px 10px}
+}
+</style>
+</head>
+<body>
+
+<input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+
+<header>
+  <div class="logo">
+    <span class="logo-title">EVAC</span>
+    <span class="logo-sub">Sistema Appello Evacuazione</span>
+  </div>
+  <div class="header-right">
+    <button class="hdr-btn btn-upload" id="uploadBtn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+      <span>Carica Excel</span>
+    </button>
+    <button class="hdr-btn btn-print" id="printBtn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="6 9 6 2 18 2 18 9"/>
+        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+        <rect x="6" y="14" width="12" height="8"/>
+      </svg>
+      <span>Stampa Esito</span>
+    </button>
+    <div class="live-dot"></div>
+    <span class="timestamp" id="clock">--:--:--</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- PRINT HEADER (screen: hidden) -->
+  <div class="print-only print-header">
+    <h1>EVAC — VERBALE PROVA DI EVACUAZIONE</h1>
+    <div class="ph-sub" id="phDate"></div>
+    <div class="ph-src" id="phSrc"></div>
+  </div>
+
+  <!-- DROP ZONE -->
+  <div class="drop-zone" id="dropZone">
+    <div class="drop-icon">📂</div>
+    <div class="drop-title">Carica Lista Dipendenti</div>
+    <div class="drop-sub">
+      Trascina qui il tuo file Excel (.xlsx / .xls)<br>
+      oppure <strong style="color:var(--accent2)">clicca per selezionarlo</strong><br><br>
+      <span style="opacity:0.5">La lista predefinita è già caricata — puoi sostituirla in qualsiasi momento</span>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats" id="statsSection">
+    <div class="stat-card neutral">
+      <div class="stat-label">Totale Dipendenti</div>
+      <div class="stat-value" id="stat-total">0</div>
+    </div>
+    <div class="stat-card safe">
+      <div class="stat-label">Presenti al PDR</div>
+      <div class="stat-value" id="stat-present">0</div>
+    </div>
+    <div class="stat-card danger">
+      <div class="stat-label">Mancanti</div>
+      <div class="stat-value" id="stat-missing">0</div>
+    </div>
+    <div class="stat-card warn">
+      <div class="stat-label">Copertura %</div>
+      <div class="stat-value" id="stat-pct">0%</div>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-wrap" id="progressSection">
+    <div class="progress-header">
+      <span class="progress-label">Avanzamento Appello</span>
+      <span class="progress-pct" id="prog-pct">0%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="prog-fill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar" id="toolbarSection">
+    <div class="search-wrap">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="search-input" id="search" type="text" placeholder="Cerca nome…">
+    </div>
+    <button class="filter-btn active" data-filter="all">Tutti</button>
+    <button class="filter-btn safe-btn" data-filter="present">Presenti</button>
+    <button class="filter-btn" data-filter="absent">Assenti</button>
+    <button class="reset-btn" id="resetBtn">↺ Reset</button>
+  </div>
+
+  <!-- LIST HEADER -->
+  <div class="list-header" id="listHeader">
+    <span>#</span>
+    <span>Nominativo</span>
+    <span style="text-align:center">Presente</span>
+  </div>
+
+  <!-- PERSON LIST -->
+  <div class="person-list" id="personList"></div>
+  <div class="empty" id="emptyMsg" style="display:none">NESSUN RISULTATO</div>
+
+  <!-- ABSENT SUMMARY (screen: hidden, print: visible) -->
+  <div class="absent-summary" id="absentSummary">
+    <h2>⚠ PERSONALE NON RILEVATO AL PUNTO DI RACCOLTA</h2>
+    <div class="absent-tags" id="absentTags"></div>
+  </div>
+
+  <!-- PRINT FOOTER -->
+  <div class="print-footer">
+    <div>
+      <div class="pf-sign">Addetto Evacuazione</div>
+    </div>
+    <div>
+      <div class="pf-sign">Responsabile Sicurezza</div>
+    </div>
+    <div style="text-align:right;font-size:0.65rem;color:#999;align-self:flex-end">
+      <span id="pfTime"></span>
+    </div>
+  </div>
+
+</main>
+
+<!-- ALARM BANNER -->
+<div class="alarm-banner" id="alarmBanner">
+  ⚠ EVACUAZIONE IN CORSO — VERIFICARE PRESENZE
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-dot"></div>
+  <span id="toastMsg"></span>
+</div>
+
+<script>
+// ── DEFAULT DATA ──
+const DEFAULT_NAMES = [
+  "AGOSTINI LUCA","AGRESTI GRETA","ALTOBELLI SERAFINO","AMADIO CHRISTIAN",
+  "AMADIO WILLIAM","AMBROSIO ANDREA","AMICO ULDERICO","ANNECCHINI ENRICO",
+  "ANTOGIOVANNI ANDREA","ANTONINI PRIMO","ARCESI ANTONIO","ARDUINI MIRELLA",
+  "BARBERINI LUCA","BARELLI BENEDETTA","BASSETTI VIOLA","BASSO FABRIZIO",
+  "BELGACEM BESMA","BELLU CLAUDIO","BERNA BERIONNI VALERIO","BERTOLISSIO SILVIA",
+  "BESCO LUIGI","BISCARO PAOLO","BORDIGNON GIANNA","BORRIELLO CIRO",
+  "BORRO PATRIZIO","CARBONE SABRINA","CARDINALI GIANLUCA","CARNIEL LUCA",
+  "CECI CLAUDIO","CELANO GIUSEPPE","CELEBRIN VIVIANA","CENTOMO GABRIELE",
+  "CERVINI ROBERTO ROSARIO","CERVONI MARIA CLAUDIA","CESTRA MASSIMO",
+  "CEVRAIN CHIARA","CICCIARELLI GIOVANNA","CICCIARELLI MASSIMILIANO",
+  "CICCONI MANUELA","CICERCHIA MASSIMILIANO","CIOCIA GIANNI","CITRONE ROSALBA",
+  "COBIANI ALESSANDRA","COCO PIETRO","CONSALVI ANTONIO","CORAZZINA DANIELA",
+  "CORSI MASSIMO","CORSI VINCENZO","CORVI FABIO","CRESCENZO ALESSANDRO",
+  "CRISTOFOLI PAOLO","CROATTO FRANCESCA","DALLA NORA CRISTIAN",
+  "DALLA VALLE MARICA","DALL'ARMELLINA ANDREA","D'AMATO EMILIO",
+  "D'AMORE AMALIA","D'ANGELI ANGELO","DANTE CHRISTIAN","DE ANGELIS TIZIANO",
+  "DE CRESCENZO ILARIA","DE GOL ALESSANDRO","DE PERSIIS CARLO",
+  "DE PETRIS ANTONIO","DEL VARO GIANCARLO","DELLA CAVE MICHELA",
+  "DELLE DONNE ANGELO","DI BIASIO PATRIZIA","DI COSTANZO GIULIANA",
+  "DI MASSIMO ADOLFO","DI VEROLI ENRICO","FABRIS MARCO","FANZON ALDO",
+  "FEDERICI VINCENZO","FERRACCI DENNI","FICHERA GIOVANNI","FILIPPI GIANLUCA",
+  "FIORINI GIORGIO","FIOROT LUCA","FORNEA RICCARDO","FRANCHI ALESSIO",
+  "FRANCHIN ROBERTO","GABOTTI MICHELE","GAGANDEEP SINGH","GAGGERO SARAH PAOLA",
+  "GARAMELLA MARCO","GASBARRONE GIUSEPPE","GENERALI MARCO","GIORDANI DANILA",
+  "GIUSEPPETTI SABRINA","GNESSI ALESSANDRO","GRANELLA MIRKO","GROSSI SIMONE",
+  "IACHETTA CARMELA","IACOVACCI GIANNI","IOZZI CESARE","LA STARZA MARCO",
+  "LALLI ROBERTO","LAMBIASI LAVINIA","LAURETTI GINO","L'AURORA MAURIZIO",
+  "LEONI DONATELLA","LEPRI CLAUDIO","LIBERTI GIULIANO","LIBERTI LUCA",
+  "MACEDONIA ALESSIO","MANCINI ALESSANDRA","MANCO MARIO","MANCUSO FRANCESCO",
+  "MANGIA VINCENZO","MANICONE LUCA","MARINELLI DAVIDE","MARINO VALTER",
+  "MARSON ALESSIO","MARTINO DOMENICO","MAZZOCCHI MASSIMO","MEDEA MAURO",
+  "MEGLIO LOREDANA","MEROLLE MIRCO","MESTO MATTIA","MONETTI UMBERTO",
+  "MONTELLA GIORGIA","MONTI CRISTINA","MORETTI CARLO","MORONI ANDREA",
+  "NALLI SIMONE","NARDACCI EMANUELE","NARDECCHIA STEFANO","NARDIN MICHELE",
+  "NEGRO ANDREA","NIEDDU DENIS","NORMANDO MAURIZIO","OPRIS OVIDIU MIRCEA",
+  "ORELLI PIERLUIGI","OVANI FABRIZIO","PALMIERI SILVIA","PALOMBO MASSIMILIANO",
+  "PALOMBO NICHOLAS","PANDOZZI ALESSANDRA","PARASMO ANGELO","PARISI FRANCESCO",
+  "PASQUALI GIANNI","PENNACCHINI SARA","PENNACCHIO DANIELE","PENNELLA NADIA",
+  "PERCOCO ADRIANO ERASMO","PITTI ALESSANDRO","PITTIA MILENA","POCCI PIETRO",
+  "PORCELLI ALESSANDRO","PREVIATO VALENTINA","PRIMI FERDINANDO","PUCCI ENRICO",
+  "RAUCCI FABRIZIO","RIGINELLI STEFANO","RINDONE VINCENZO","RIONDATO PAOLO",
+  "ROSSI MONICA","ROSSI NATASCIA","ROSSI ORLANDO","RUSSO SERGIO",
+  "SACCHI STEFANO","SANTAMARIA PATRIZIO","SARRA EMILIANO","SCALA GIUSEPPE",
+  "SCALDARELLA DOMENICO","SCERPA LETIZIA","SERRA GIOVANNI","SPALICE GAETANO",
+  "SPERLONGA GISLENO","SPILLERE ADRIANO","STEFANELLI FILIPPO","STEFANELLI STEFANO",
+  "TACCHINI FRANCESCO MARIA","TAMMETTA GIORGIO","TASCIOTTI ANGELO",
+  "TEDESCO LUCIA","TOGNETTO FABRIZIO","TOGNONI DAVIDE","VANINI CHIARA",
+  "VARCASIA GIUSEPPE","VENDRAME GIAMPAOLO","VIDALI MARIO","VOLPICELLI ANDREA",
+  "ZACCHEO QUINTINO","ZAMBON PAOLA"
+];
+const DEFAULT_ABSENT = new Set([
+  "BELGACEM BESMA","BERTOLISSIO SILVIA","BORDIGNON GIANNA","CARBONE SABRINA",
+  "COBIANI ALESSANDRA","DEL VARO GIANCARLO","GAGANDEEP SINGH","GASBARRONE GIUSEPPE",
+  "IACOVACCI GIANNI","MONTELLA GIORGIA","NIEDDU DENIS","OPRIS OVIDIU MIRCEA",
+  "PARISI FRANCESCO","PENNACCHIO DANIELE"
+]);
+
+let people = [];
+let filter = 'all';
+let search = '';
+let currentFileName = 'Lista predefinita (EVAC.xlsx)';
+
+// ── CLOCK ──
+function updateClock() {
+  document.getElementById('clock').textContent =
+    new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── TOAST ──
+let toastTimer;
+function showToast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.className = 'toast ' + type;
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+// ── ALARM ──
+const alarmBanner = document.getElementById('alarmBanner');
+function showAlarm() {
+  alarmBanner.classList.add('visible');
+  setTimeout(() => alarmBanner.classList.remove('visible'), 4500);
+}
+
+// ── LOAD DATA INTO APP ──
+function loadPeople(names, absentSet, fileName) {
+  people = names.map((name, i) => ({
+    id: i, name,
+    present: absentSet ? !absentSet.has(name) : true
+  }));
+  currentFileName = fileName;
+  filter = 'all'; search = '';
+  document.getElementById('search').value = '';
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('[data-filter="all"]').classList.add('active');
+  render();
+}
+
+function loadDefault() {
+  loadPeople(DEFAULT_NAMES, DEFAULT_ABSENT, 'Lista predefinita (EVAC.xlsx)');
+  showAlarm();
+}
+
+// ── PARSE EXCEL ──
+function parseExcel(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type:'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+
+      // Auto-detect name column: most cells matching "WORD WORD" uppercase pattern
+      const colCount = Math.max(...rows.map(r => r.length));
+      let bestCol = -1, bestScore = 0;
+      for (let c = 0; c < colCount; c++) {
+        let score = 0;
+        rows.forEach(r => {
+          const v = String(r[c]||'').trim();
+          if (v.length > 4 && /^[A-ZÀ-Ùa-zà-ù\s'']+$/.test(v) && v.trim().includes(' ')) score++;
+        });
+        if (score > bestScore) { bestScore = score; bestCol = c; }
+      }
+
+      if (bestCol < 0 || bestScore < 2) {
+        showToast('Nessuna colonna nomi trovata nel file.', 'err'); return;
+      }
+
+      // Extract & deduplicate names
+      let names = [];
+      rows.forEach(r => {
+        const v = String(r[bestCol]||'').trim().toUpperCase();
+        if (v.length > 3 && v.includes(' ') && /^[A-ZÀ-Ù\s'']+$/.test(v)) names.push(v);
+      });
+      names = [...new Set(names)].sort();
+
+      if (names.length === 0) {
+        showToast('Nessun nominativo trovato nel file.', 'err'); return;
+      }
+
+      // Auto-detect boolean presence column
+      let presentCol = -1;
+      for (let c = 0; c < colCount; c++) {
+        if (c === bestCol) continue;
+        let bc = 0;
+        rows.forEach(r => {
+          const v = r[c];
+          if (v===true||v===false||String(v).toUpperCase()==='TRUE'||
+              String(v).toUpperCase()==='FALSE'||String(v).toUpperCase()==='VERO'||
+              String(v).toUpperCase()==='FALSO') bc++;
+        });
+        if (bc > 2) { presentCol = c; break; }
+      }
+
+      // Build absent set from file if boolean col found
+      let absentSet = null;
+      if (presentCol >= 0) {
+        absentSet = new Set();
+        rows.forEach(r => {
+          const name = String(r[bestCol]||'').trim().toUpperCase();
+          const v = r[presentCol];
+          const absent = (v===false||String(v).toUpperCase()==='FALSE'||String(v).toUpperCase()==='FALSO');
+          if (absent && name.length > 3) absentSet.add(name);
+        });
+      }
+
+      loadPeople(names, absentSet, file.name);
+      showAlarm();
+      showToast(`✓ ${names.length} dipendenti caricati da "${file.name}"`, 'ok');
+    } catch(err) {
+      showToast('Errore lettura file: ' + err.message, 'err');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── FILE INPUT ──
+const fileInput = document.getElementById('fileInput');
+document.getElementById('uploadBtn').addEventListener('click', () => fileInput.click());
+document.getElementById('dropZone').addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => {
+  if (e.target.files[0]) parseExcel(e.target.files[0]);
+  e.target.value = '';
+});
+
+// ── DRAG & DROP ──
+const dropZone = document.getElementById('dropZone');
+['dragenter','dragover'].forEach(ev =>
+  dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.add('drag-over'); }));
+['dragleave','drop'].forEach(ev =>
+  dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.remove('drag-over'); }));
+dropZone.addEventListener('drop', e => {
+  const f = e.dataTransfer.files[0];
+  if (f) parseExcel(f);
+});
+
+// ── PRINT ──
+document.getElementById('printBtn').addEventListener('click', () => {
+  if (people.length === 0) {
+    showToast('Nessun dato da stampare. Carica prima un file.', 'warn'); return;
+  }
+
+  // Fill absent summary
+  const absent = people.filter(p => !p.present);
+  const tags = document.getElementById('absentTags');
+  if (absent.length === 0) {
+    tags.innerHTML = '<span class="all-present-msg">✓ TUTTI I DIPENDENTI SONO AL PUNTO DI RACCOLTA</span>';
+  } else {
+    tags.innerHTML = absent.map(p => `<span class="absent-tag">${p.name}</span>`).join('');
+  }
+
+  // Fill print header
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('it-IT',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const timeStr = now.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('phDate').textContent  = `Data: ${dateStr}  —  Ora inizio appello: ${timeStr}`;
+  document.getElementById('phSrc').textContent   = `Fonte lista: ${currentFileName}`;
+  document.getElementById('pfTime').textContent  = `Stampato il ${dateStr} alle ${timeStr}`;
+
+  // Temporarily show all records for printing
+  const savedFilter = filter, savedSearch = search;
+  filter = 'all'; search = '';
+  renderForPrint();
+
+  window.print();
+
+  // Restore
+  setTimeout(() => {
+    filter = savedFilter; search = savedSearch;
+    document.getElementById('search').value = savedSearch;
+    render();
+  }, 800);
+});
+
+// ── UPDATE STATS ──
+function updateStats() {
+  const total   = people.length;
+  const present = people.filter(p => p.present).length;
+  const missing = total - present;
+  const pct     = total > 0 ? Math.round((present/total)*100) : 0;
+
+  document.getElementById('stat-total').textContent   = total;
+  document.getElementById('stat-present').textContent = present;
+  document.getElementById('stat-missing').textContent = missing;
+  document.getElementById('stat-pct').textContent     = pct + '%';
+  document.getElementById('prog-pct').textContent     = pct + '%';
+
+  const color = pct >= 90 ? 'var(--safe)' : pct >= 70 ? 'var(--accent2)' : 'var(--accent)';
+  const fill  = document.getElementById('prog-fill');
+  fill.style.width = pct + '%';
+  fill.style.background = color;
+  document.getElementById('prog-pct').style.color = color;
+}
+
+// ── BUILD ROW HTML ──
+function rowHTML(p, idx) {
+  return `
+    <div class="person-row ${p.present?'present':'absent'}"
+         data-id="${p.id}" onclick="togglePerson(${p.id})">
+      <span class="row-num">${String(idx+1).padStart(2,'0')}</span>
+      <span class="row-name">${p.name}</span>
+      <div class="toggle-wrap">
+        <label class="toggle" onclick="event.stopPropagation()">
+          <input type="checkbox" ${p.present?'checked':''} onchange="togglePerson(${p.id})">
+          <div class="toggle-track"><div class="toggle-thumb"></div></div>
+        </label>
+      </div>
+      <div class="print-badge-cell">
+        <span class="print-badge ${p.present?'p':'a'}">${p.present?'PRESENTE':'ASSENTE'}</span>
+      </div>
+    </div>`;
+}
+
+// ── RENDER ──
+function render() {
+  const q = search.toLowerCase().trim();
+  const visible = people.filter(p => {
+    if (q && !p.name.toLowerCase().includes(q)) return false;
+    if (filter==='present' && !p.present) return false;
+    if (filter==='absent'  &&  p.present) return false;
+    return true;
+  });
+
+  const list  = document.getElementById('personList');
+  const empty = document.getElementById('emptyMsg');
+
+  if (visible.length === 0 && people.length > 0) {
+    list.innerHTML = ''; empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    list.innerHTML = visible.map((p,i) => rowHTML(p, i)).join('');
+  }
+  updateStats();
+}
+
+function renderForPrint() {
+  const list = document.getElementById('personList');
+  list.innerHTML = people.map((p,i) => rowHTML(p, i)).join('');
+  updateStats();
+}
+
+function togglePerson(id) {
+  const p = people.find(x => x.id === id);
+  if (p) { p.present = !p.present; render(); }
+}
+
+// ── FILTERS ──
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    filter = btn.dataset.filter;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  });
+});
+
+document.getElementById('search').addEventListener('input', e => {
+  search = e.target.value; render();
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  people = people.map(p => ({...p, present:true}));
+  search=''; filter='all';
+  document.getElementById('search').value='';
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('[data-filter="all"]').classList.add('active');
+  render();
+  showToast('Appello azzerato — tutti impostati come presenti.','warn');
+  showAlarm();
+});
+
+// ── INIT ──
+loadDefault();
+</script>
+</body>
+</html>
