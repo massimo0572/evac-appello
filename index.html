@@ -9,7 +9,7 @@
 <style>
 :root{
   --bg:#0a0c10;--card:#181d27;--border:#232b3a;
-  --accent:#ff3c3c;--accent2:#ff8800;--safe:#00d084;--blue:#4f8ef7;--purple:#a78bfa;
+  --accent:#ff3c3c;--accent2:#ff8800;--safe:#00d084;--blue:#4f8ef7;
   --text:#e8eaf0;--muted:#6b7690;
   --mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;--display:'Bebas Neue',sans-serif;
 }
@@ -20,7 +20,7 @@ body::before{content:'';position:fixed;inset:0;
   linear-gradient(90deg,rgba(255,60,60,0.03)1px,transparent 1px);
   background-size:40px 40px;pointer-events:none;z-index:0}
 
-/* ── HEADER ── */
+/* HEADER */
 header{position:sticky;top:0;z-index:100;background:rgba(10,12,16,0.96);
   backdrop-filter:blur(14px);border-bottom:1px solid var(--border);
   padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:64px;gap:10px}
@@ -35,9 +35,8 @@ header{position:sticky;top:0;z-index:100;background:rgba(10,12,16,0.96);
   border-radius:20px;padding:3px 10px;font-family:var(--mono);font-size:0.62rem;
   letter-spacing:1px;color:var(--safe);display:none;align-items:center;gap:5px}
 .live-badge.show{display:flex}
-.live-dot{width:6px;height:6px;border-radius:50%;background:var(--safe);
-  animation:livepulse 1.5s ease-in-out infinite}
-@keyframes livepulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.8)}}
+.ldot{width:6px;height:6px;border-radius:50%;background:var(--safe);animation:lp 1.5s ease-in-out infinite}
+@keyframes lp{0%,100%{opacity:1}50%{opacity:0.3}}
 
 /* HDR BUTTONS */
 .hdr-btn{display:flex;align-items:center;gap:6px;border-radius:8px;
@@ -49,85 +48,47 @@ header{position:sticky;top:0;z-index:100;background:rgba(10,12,16,0.96);
 .btn-print:hover{background:rgba(0,208,132,0.25)}
 #fileInput{display:none}
 
-/* ── SETUP MODAL ── */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;
-  display:flex;align-items:center;justify-content:center;padding:20px;
-  backdrop-filter:blur(4px)}
-.modal-overlay.hidden{display:none}
-.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;
-  padding:32px;max-width:560px;width:100%;position:relative}
-.modal h2{font-family:var(--display);font-size:1.8rem;letter-spacing:3px;
-  color:var(--blue);margin-bottom:6px}
-.modal .modal-sub{font-family:var(--mono);font-size:0.72rem;color:var(--muted);
-  letter-spacing:1px;margin-bottom:24px;line-height:1.7}
-.modal-steps{display:flex;flex-direction:column;gap:14px;margin-bottom:24px}
-.step{display:flex;gap:14px;align-items:flex-start}
-.step-num{width:26px;height:26px;border-radius:50%;background:var(--blue);
-  color:#fff;font-family:var(--mono);font-size:0.7rem;font-weight:700;
-  display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
-.step-body{flex:1}
-.step-title{font-family:var(--sans);font-size:0.85rem;font-weight:600;margin-bottom:4px}
-.step-desc{font-family:var(--mono);font-size:0.7rem;color:var(--muted);line-height:1.6}
-.step-desc a{color:var(--blue);text-decoration:none}
-.step-desc a:hover{text-decoration:underline}
-.step-desc code{background:rgba(79,142,247,0.15);border:1px solid rgba(79,142,247,0.3);
-  border-radius:4px;padding:1px 6px;font-size:0.68rem;color:var(--blue)}
-.modal-fields{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
-.field-label{font-family:var(--mono);font-size:0.65rem;letter-spacing:1px;
-  text-transform:uppercase;color:var(--muted);margin-bottom:4px}
-.field-input{background:var(--bg);border:1px solid var(--border);border-radius:8px;
-  color:var(--text);font-family:var(--mono);font-size:0.78rem;padding:10px 14px;
-  outline:none;transition:border-color 0.2s;width:100%}
-.field-input:focus{border-color:var(--blue)}
-.field-input::placeholder{color:var(--muted)}
-.modal-actions{display:flex;gap:10px;flex-wrap:wrap}
-.btn-primary{background:var(--blue);border:none;border-radius:8px;color:#fff;
-  font-family:var(--mono);font-size:0.75rem;letter-spacing:1px;text-transform:uppercase;
-  padding:11px 22px;cursor:pointer;transition:opacity 0.15s;font-weight:600}
-.btn-primary:hover{opacity:0.85}
-.btn-secondary{background:transparent;border:1px solid var(--border);border-radius:8px;
-  color:var(--muted);font-family:var(--mono);font-size:0.75rem;letter-spacing:1px;
-  text-transform:uppercase;padding:11px 18px;cursor:pointer;transition:all 0.15s}
-.btn-secondary:hover{border-color:var(--muted);color:var(--text)}
-.modal-hint{margin-top:16px;font-family:var(--mono);font-size:0.66rem;
-  color:var(--muted);line-height:1.6;border-top:1px solid var(--border);padding-top:14px}
-.modal-hint code{background:rgba(255,255,255,0.06);border-radius:3px;padding:1px 5px}
+/* LOADING SCREEN */
+#loadingScreen{position:fixed;inset:0;background:var(--bg);z-index:999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+.loading-title{font-family:var(--display);font-size:3rem;letter-spacing:6px;color:var(--accent)}
+.loading-sub{font-family:var(--mono);font-size:0.75rem;color:var(--muted);letter-spacing:2px}
+.loading-bar-wrap{width:240px;height:4px;background:var(--border);border-radius:99px;overflow:hidden}
+.loading-bar{height:100%;background:var(--accent);border-radius:99px;
+  animation:loadbar 1.4s ease-in-out infinite}
+@keyframes loadbar{0%{width:0%;margin-left:0}50%{width:60%;margin-left:20%}100%{width:0%;margin-left:100%}}
+#loadingError{display:none;font-family:var(--mono);font-size:0.72rem;color:var(--accent);
+  letter-spacing:1px;text-align:center;max-width:340px;line-height:1.7}
 
-/* ── STATUS BAR ── */
-.status-bar{display:none;align-items:center;gap:10px;margin-bottom:20px;
-  font-family:var(--mono);font-size:0.7rem;letter-spacing:1px;
-  background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 16px}
-.status-bar.show{display:flex}
-.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.status-dot.ok{background:var(--safe);box-shadow:0 0 6px var(--safe)}
-.status-dot.syncing{background:var(--accent2);box-shadow:0 0 6px var(--accent2);
-  animation:livepulse 0.8s infinite}
-.status-dot.err{background:var(--accent);box-shadow:0 0 6px var(--accent)}
-.status-text{color:var(--muted);flex:1}
-.status-repo{color:var(--blue);font-size:0.62rem}
-.btn-reconfig{background:none;border:1px solid var(--border);border-radius:5px;
-  color:var(--muted);font-family:var(--mono);font-size:0.6rem;padding:3px 8px;cursor:pointer;transition:all 0.15s}
-.btn-reconfig:hover{border-color:var(--muted);color:var(--text)}
+/* STATUS BAR */
+.status-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px;
+  background:var(--card);border:1px solid var(--border);border-radius:8px;padding:9px 14px;
+  font-family:var(--mono);font-size:0.68rem;letter-spacing:1px}
+.sdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sdot.ok{background:var(--safe);box-shadow:0 0 6px var(--safe)}
+.sdot.spin{background:var(--accent2);box-shadow:0 0 6px var(--accent2);animation:lp 0.7s infinite}
+.sdot.err{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+.stxt{color:var(--muted);flex:1}
+.srepo{color:var(--blue);font-size:0.6rem}
 
-/* ── MAIN ── */
+/* MAIN */
 main{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:24px 20px 80px}
 
 /* DROP ZONE */
-.drop-zone{border:2px dashed var(--border);border-radius:16px;padding:56px 32px;
-  text-align:center;margin-bottom:24px;cursor:pointer;
-  transition:border-color 0.2s,background 0.2s;display:none}
+.drop-zone{border:2px dashed var(--border);border-radius:16px;padding:54px 32px;
+  text-align:center;margin-bottom:24px;cursor:pointer;transition:all 0.2s;display:none}
 .drop-zone.show{display:block}
 .drop-zone:hover,.drop-zone.over{border-color:var(--accent2);background:rgba(255,136,0,0.05)}
-.drop-icon{font-size:2.4rem;margin-bottom:12px}
+.drop-icon{font-size:2.3rem;margin-bottom:12px}
 .drop-title{font-family:var(--display);font-size:1.6rem;letter-spacing:3px;color:var(--accent2);margin-bottom:8px}
-.drop-sub{font-family:var(--mono);font-size:0.7rem;color:var(--muted);letter-spacing:1px;line-height:1.9}
+.drop-sub{font-family:var(--mono);font-size:0.68rem;color:var(--muted);letter-spacing:1px;line-height:1.9}
 
 /* STATS */
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:14px;margin-bottom:24px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px}
 .stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden}
 .stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
-.stat-card.c-neutral::after{background:var(--muted)}.stat-card.c-safe::after{background:var(--safe)}
-.stat-card.c-danger::after{background:var(--accent)}.stat-card.c-warn::after{background:var(--accent2)}
+.c-neutral::after{background:var(--muted)}.c-safe::after{background:var(--safe)}
+.c-danger::after{background:var(--accent)}.c-warn::after{background:var(--accent2)}
 .stat-label{font-family:var(--mono);font-size:0.62rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
 .stat-value{font-family:var(--display);font-size:2.8rem;line-height:1;letter-spacing:2px}
 .c-neutral .stat-value{color:var(--text)}.c-safe .stat-value{color:var(--safe)}
@@ -168,13 +129,13 @@ main{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:24px 20p
 .person-row{display:grid;grid-template-columns:36px 1fr 120px;gap:14px;align-items:center;
   background:var(--card);border:1px solid var(--border);border-radius:8px;
   padding:11px 14px;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden}
-.person-row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;transition:background 0.2s}
+.person-row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
 .person-row.present::before{background:var(--safe)}.person-row.absent::before{background:var(--accent)}
 .person-row:hover{border-color:#3a4460;background:#1c2130}
 .person-row.present{border-color:rgba(0,208,132,0.18)}.person-row.absent{border-color:rgba(255,60,60,0.18)}
-@keyframes flash-g{0%,100%{background:var(--card)}50%{background:rgba(0,208,132,0.14)}}
-@keyframes flash-r{0%,100%{background:var(--card)}50%{background:rgba(255,60,60,0.12)}}
-.person-row.fl-g{animation:flash-g 0.8s ease}.person-row.fl-r{animation:flash-r 0.8s ease}
+@keyframes fg{0%,100%{background:var(--card)}50%{background:rgba(0,208,132,0.15)}}
+@keyframes fr{0%,100%{background:var(--card)}50%{background:rgba(255,60,60,0.13)}}
+.person-row.flg{animation:fg 0.8s ease}.person-row.flr{animation:fr 0.8s ease}
 .row-num{font-family:var(--mono);font-size:0.62rem;color:var(--muted);text-align:center}
 .row-name{font-family:var(--sans);font-size:0.88rem;font-weight:600;letter-spacing:0.3px}
 .toggle-wrap{display:flex;justify-content:center}
@@ -206,14 +167,13 @@ main{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:24px 20p
 .toast.ok .tdot{background:var(--safe)}.toast.err .tdot{background:var(--accent)}
 .toast.warn .tdot{background:var(--accent2)}.toast.info .tdot{background:var(--blue)}
 
-/* ── PRINT ── */
+/* PRINT */
 .print-only,.absent-summary,.print-footer,.print-badge-cell{display:none}
 @media print{
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   body{background:#fff!important;color:#111!important;font-family:Arial,sans-serif}
-  body::before,.modal-overlay,header,.toolbar,.alarm-banner,.toast,.drop-zone,
-  .filter-btn,.reset-btn,.hdr-btn,#fileInput,.toggle-wrap,.progress-wrap,
-  .status-bar,.live-badge{display:none!important}
+  body::before,#loadingScreen,header,.toolbar,.alarm-banner,.toast,.drop-zone,
+  .filter-btn,.reset-btn,.hdr-btn,#fileInput,.toggle-wrap,.progress-wrap,.status-bar,.live-badge{display:none!important}
   main{padding:0;max-width:100%}
   .print-only{display:block}
   .print-header{text-align:center;border-bottom:3px solid #111;padding-bottom:14px;margin-bottom:18px}
@@ -257,94 +217,24 @@ main{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:24px 20p
 </style>
 </head>
 <body>
-
 <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
 
-<!-- ══════════════════════════════════════════
-     SETUP MODAL
-══════════════════════════════════════════ -->
-<div class="modal-overlay" id="setupModal">
-  <div class="modal">
-    <h2>🔗 CONFIGURA DATABASE</h2>
-    <div class="modal-sub">
-      Usa il tuo repository GitHub come database condiviso gratuito.<br>
-      Tutti i dispositivi si sincronizzano in tempo reale tramite GitHub API.
-    </div>
-
-    <div class="modal-steps">
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-body">
-          <div class="step-title">Crea un repository su GitHub</div>
-          <div class="step-desc">
-            Vai su <a href="https://github.com/new" target="_blank">github.com/new</a> →
-            crea un repo pubblico (es. <code>evac-app</code>) →
-            spunta <em>"Add a README"</em> → clicca <em>Create repository</em>.<br>
-            Poi vai su <strong>Settings → Pages → Branch: main</strong> per abilitare GitHub Pages.
-          </div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-body">
-          <div class="step-title">Genera un Personal Access Token</div>
-          <div class="step-desc">
-            Vai su <a href="https://github.com/settings/tokens/new" target="_blank">GitHub → Settings → Developer Settings → Tokens (classic)</a> →
-            spunta <code>repo</code> → clicca <em>Generate token</em> → copia il token.
-          </div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-body">
-          <div class="step-title">Inserisci i dati qui sotto</div>
-          <div class="step-desc">I dati vengono salvati nel tuo browser in modo sicuro.</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal-fields">
-      <div>
-        <div class="field-label">Username GitHub</div>
-        <input class="field-input" id="ghUser" placeholder="es. mario-rossi">
-      </div>
-      <div>
-        <div class="field-label">Nome Repository</div>
-        <input class="field-input" id="ghRepo" placeholder="es. evac-app">
-      </div>
-      <div>
-        <div class="field-label">Personal Access Token</div>
-        <input class="field-input" id="ghToken" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
-      </div>
-    </div>
-
-    <div class="modal-actions">
-      <button class="btn-primary" id="connectBtn">🔗 Connetti e Sincronizza</button>
-      <button class="btn-secondary" id="offlineBtn">💾 Usa Offline</button>
-    </div>
-
-    <div class="modal-hint">
-      <strong style="color:var(--blue)">Come funziona:</strong>
-      L'app legge e scrive un file <code>db.json</code> nel tuo repository tramite l'API di GitHub.
-      Ogni toggle aggiorna il file in tempo reale. Tutti i dispositivi che aprono la pagina
-      scaricano lo stato aggiornato ogni <strong>5 secondi</strong>.
-      Il token viene salvato solo nel tuo browser locale (<code>localStorage</code>).
-    </div>
-  </div>
+<!-- LOADING SCREEN -->
+<div id="loadingScreen">
+  <div class="loading-title">EVAC</div>
+  <div class="loading-sub" id="loadingMsg">CONNESSIONE AL DATABASE…</div>
+  <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+  <div id="loadingError"></div>
 </div>
 
-<!-- ══════════════════════════════════════════
-     HEADER
-══════════════════════════════════════════ -->
+<!-- HEADER -->
 <header>
   <div class="logo">
     <span class="logo-title">EVAC</span>
     <span class="logo-sub">Appello Evacuazione</span>
   </div>
   <div class="header-right">
-    <div class="live-badge" id="liveBadge">
-      <div class="live-dot"></div><span>LIVE</span>
-    </div>
+    <div class="live-badge" id="liveBadge"><div class="ldot"></div><span>LIVE</span></div>
     <button class="hdr-btn btn-upload" id="uploadBtn">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -364,36 +254,27 @@ main{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:24px 20p
   </div>
 </header>
 
-<!-- ══════════════════════════════════════════
-     MAIN
-══════════════════════════════════════════ -->
+<!-- MAIN -->
 <main>
-  <!-- Print header -->
   <div class="print-only print-header">
     <h1>EVAC — VERBALE PROVA DI EVACUAZIONE</h1>
     <div class="ph-sub" id="phDate"></div>
     <div class="ph-src" id="phSrc"></div>
   </div>
 
-  <!-- Status bar -->
   <div class="status-bar" id="statusBar">
-    <div class="status-dot" id="sDot"></div>
-    <span class="status-text" id="sTxt">—</span>
-    <span class="status-repo" id="sRepo"></span>
-    <button class="btn-reconfig" onclick="openSetup()">⚙ Cambia</button>
+    <div class="sdot" id="sDot"></div>
+    <span class="stxt" id="sTxt">Connessione…</span>
+    <span class="srepo" id="sRepo"></span>
   </div>
 
-  <!-- Drop zone -->
   <div class="drop-zone" id="dropZone">
     <div class="drop-icon">📂</div>
     <div class="drop-title">Carica Lista Dipendenti</div>
-    <div class="drop-sub">
-      Trascina il file Excel (.xlsx) oppure <strong style="color:var(--accent2)">clicca</strong><br>
-      <span style="opacity:0.5">La lista predefinita è già attiva — carica un nuovo file per sostituirla</span>
-    </div>
+    <div class="drop-sub">Trascina il file Excel (.xlsx) oppure <strong style="color:var(--accent2)">clicca</strong><br>
+    <span style="opacity:0.5">La lista predefinita è già attiva</span></div>
   </div>
 
-  <!-- Stats -->
   <div class="stats">
     <div class="stat-card c-neutral"><div class="stat-label">Totale</div><div class="stat-value" id="stTotal">0</div></div>
     <div class="stat-card c-safe"><div class="stat-label">Presenti PDR</div><div class="stat-value" id="stPresent">0</div></div>
@@ -401,7 +282,6 @@ main{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:24px 20p
     <div class="stat-card c-warn"><div class="stat-label">Copertura</div><div class="stat-value" id="stPct">0%</div></div>
   </div>
 
-  <!-- Progress -->
   <div class="progress-wrap">
     <div class="progress-header">
       <span class="progress-label">Avanzamento Appello</span>
@@ -410,7 +290,6 @@ main{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:24px 20p
     <div class="progress-track"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
   </div>
 
-  <!-- Toolbar -->
   <div class="toolbar">
     <div class="search-wrap">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -424,20 +303,16 @@ main{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:24px 20p
     <button class="reset-btn" id="resetBtn">↺ Reset</button>
   </div>
 
-  <!-- List -->
   <div class="list-header">
     <span>#</span><span>Nominativo</span><span style="text-align:center">Presente</span>
   </div>
   <div class="person-list" id="personList"></div>
   <div class="empty" id="emptyMsg" style="display:none">NESSUN RISULTATO</div>
 
-  <!-- Absent summary (print) -->
-  <div class="absent-summary" id="absentSummary">
+  <div class="absent-summary">
     <h2>⚠ PERSONALE NON RILEVATO AL PUNTO DI RACCOLTA</h2>
     <div class="absent-tags" id="absentTags"></div>
   </div>
-
-  <!-- Print footer -->
   <div class="print-footer">
     <div><div class="pf-sign">Addetto Evacuazione</div></div>
     <div><div class="pf-sign">Responsabile Sicurezza</div></div>
@@ -448,13 +323,20 @@ main{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:24px 20p
 <div class="alarm-banner" id="alarmBanner">⚠ EVACUAZIONE IN CORSO — VERIFICARE PRESENZE</div>
 <div class="toast" id="toast"><div class="tdot"></div><span id="toastMsg"></span></div>
 
-<!-- ══════════════════════════════════════════
-     SCRIPT
-══════════════════════════════════════════ -->
 <script>
-// ─────────────────────────────────
-// DEFAULT DATA
-// ─────────────────────────────────
+// ════════════════════════════════════════
+//  GITHUB CONFIG — hardcoded, nessuna configurazione necessaria
+// ════════════════════════════════════════
+const GH_USER  = 'massimo0572';
+const GH_REPO  = 'evac-appello';
+const GH_TOKEN = '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';
+const DB_FILE  = 'db.json';
+const GH_API   = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${DB_FILE}`;
+const GH_HDR   = { Authorization:`Bearer ${GH_TOKEN}`, 'Content-Type':'application/json', 'X-GitHub-Api-Version':'2022-11-28' };
+
+// ════════════════════════════════════════
+//  DEFAULT DATA
+// ════════════════════════════════════════
 const DEFAULT_NAMES = [
   "AGOSTINI LUCA","AGRESTI GRETA","ALTOBELLI SERAFINO","AMADIO CHRISTIAN",
   "AMADIO WILLIAM","AMBROSIO ANDREA","AMICO ULDERICO","ANNECCHINI ENRICO",
@@ -513,213 +395,118 @@ const DEFAULT_ABSENT = new Set([
   "PARISI FRANCESCO","PENNACCHIO DANIELE"
 ]);
 
-// ─────────────────────────────────
-// STATE
-// ─────────────────────────────────
+// ════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════
 let people   = [];
 let filter   = 'all';
 let search   = '';
 let fileName = 'Lista predefinita (EVAC.xlsx)';
-
-// GitHub config
-let GH = { user:'', repo:'', token:'' };
-let ghMode = false;       // true = connected to GitHub
-let dbSha  = null;        // SHA of db.json (needed for PUT)
+let dbSha    = null;
+let isSaving = false;
+let saveTimer = null;
 let pollTimer = null;
-let isSaving  = false;    // lock to avoid parallel saves
+let lastEtag  = '';
 
-// ─────────────────────────────────
-// CLOCK
-// ─────────────────────────────────
+// ════════════════════════════════════════
+//  CLOCK
+// ════════════════════════════════════════
 function tick(){
   document.getElementById('clock').textContent =
     new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
 setInterval(tick,1000); tick();
 
-// ─────────────────────────────────
-// TOAST
-// ─────────────────────────────────
+// ════════════════════════════════════════
+//  TOAST / ALARM / FLASH
+// ════════════════════════════════════════
 let _tt;
 function toast(msg,type='ok'){
   const el=document.getElementById('toast');
   el.className='toast '+type;
   document.getElementById('toastMsg').textContent=msg;
   el.classList.add('show');
-  clearTimeout(_tt);
-  _tt=setTimeout(()=>el.classList.remove('show'),4200);
+  clearTimeout(_tt); _tt=setTimeout(()=>el.classList.remove('show'),4200);
 }
-
-// ALARM
 const alarmEl=document.getElementById('alarmBanner');
 function alarm(){ alarmEl.classList.add('show'); setTimeout(()=>alarmEl.classList.remove('show'),4500); }
-
-// FLASH ROW
 function flashRow(id,present){
   const el=document.querySelector(`[data-id="${id}"]`);
   if(!el) return;
-  el.classList.remove('fl-g','fl-r');
-  void el.offsetWidth;
-  el.classList.add(present?'fl-g':'fl-r');
-  setTimeout(()=>el.classList.remove('fl-g','fl-r'),900);
+  el.classList.remove('flg','flr'); void el.offsetWidth;
+  el.classList.add(present?'flg':'flr');
+  setTimeout(()=>el.classList.remove('flg','flr'),900);
 }
 
-// ─────────────────────────────────
-// STATUS BAR
-// ─────────────────────────────────
-function setStatus(type, text, repo=''){
-  const bar=document.getElementById('statusBar');
-  bar.classList.add('show');
-  document.getElementById('sDot').className='status-dot '+type;
+// ════════════════════════════════════════
+//  STATUS
+// ════════════════════════════════════════
+function setStatus(type, text){
+  document.getElementById('sDot').className='sdot '+type;
   document.getElementById('sTxt').textContent=text;
-  document.getElementById('sRepo').textContent=repo;
-  document.getElementById('liveBadge').classList.toggle('show', type==='ok' && ghMode);
+  document.getElementById('sRepo').textContent= type==='ok' ? `${GH_USER}/${GH_REPO}` : '';
+  document.getElementById('liveBadge').classList.toggle('show', type==='ok');
 }
+function setLoading(msg){ document.getElementById('loadingMsg').textContent=msg; }
 
-// ─────────────────────────────────
-// SETUP MODAL
-// ─────────────────────────────────
-function openSetup(){
-  document.getElementById('setupModal').classList.remove('hidden');
-  // pre-fill if saved
-  const s=loadCfg();
-  if(s){ document.getElementById('ghUser').value=s.user||'';
-         document.getElementById('ghRepo').value=s.repo||'';
-         document.getElementById('ghToken').value=s.token||''; }
-}
-function closeSetup(){ document.getElementById('setupModal').classList.add('hidden'); }
-
-document.getElementById('connectBtn').addEventListener('click',async()=>{
-  const user  = document.getElementById('ghUser').value.trim();
-  const repo  = document.getElementById('ghRepo').value.trim();
-  const token = document.getElementById('ghToken').value.trim();
-  if(!user||!repo||!token){ toast('Compila tutti i campi.','err'); return; }
-  GH={user,repo,token};
-  saveCfg(GH);
-  closeSetup();
-  await initGitHub();
-});
-
-document.getElementById('offlineBtn').addEventListener('click',()=>{
-  closeSetup();
-  ghMode=false;
-  setStatus('syncing','Modalità offline — dati salvati solo su questo dispositivo');
-  loadDefault();
-  toast('Modalità offline attiva.','warn');
-});
-
-// ─────────────────────────────────
-// LOCAL STORAGE CONFIG
-// ─────────────────────────────────
-function saveCfg(cfg){ try{ localStorage.setItem('evac_gh',JSON.stringify(cfg)); }catch(e){} }
-function loadCfg(){ try{ const v=localStorage.getItem('evac_gh'); return v?JSON.parse(v):null; }catch(e){ return null; } }
-
-// ─────────────────────────────────
-// GITHUB API
-// ─────────────────────────────────
-const ghApi = (path,opts={})=>
-  fetch(`https://api.github.com/repos/${GH.user}/${GH.repo}/${path}`,{
-    headers:{ Authorization:`Bearer ${GH.token}`, 'Content-Type':'application/json', 'X-GitHub-Api-Version':'2022-11-28' },
-    ...opts
-  });
-
-async function initGitHub(){
-  setStatus('syncing','Connessione a GitHub…');
-  try{
-    // Try to GET db.json
-    const res = await ghApi('contents/db.json');
-    if(res.ok){
-      const data = await res.json();
-      dbSha = data.sha;
-      const db = JSON.parse(atob(data.content.replace(/\n/g,'')));
-      applyDb(db);
-      ghMode=true;
-      setStatus('ok','Sincronizzato con GitHub',`${GH.user}/${GH.repo}`);
-      toast('✓ Connesso a GitHub — sincronizzazione attiva.','ok');
-      startPolling();
-    } else if(res.status===404){
-      // db.json doesn't exist yet — create it
-      ghMode=true;
-      setStatus('ok','Repository connesso — inizializzazione DB…',`${GH.user}/${GH.repo}`);
-      loadDefault();
-      await saveToGitHub(true);
-      startPolling();
-      toast('✓ Repository connesso — database creato.','ok');
-    } else {
-      throw new Error('HTTP '+res.status);
-    }
-  } catch(e){
-    setStatus('err','Errore connessione: '+e.message);
-    toast('Errore: '+e.message,'err');
-    ghMode=false;
-  }
-}
-
-// Apply remote DB to local state
-function applyDb(db, flash=false){
-  if(!db||!db.presenze) return;
-  if(db.nomi && db.nomi.length>0 && db.nomi.length!==people.length){
-    // Remote has a different list — reload people
-    people = db.nomi.map((name,i)=>({
-      id:i, name,
-      present: db.presenze[name]!==undefined ? db.presenze[name] : true
-    }));
-    if(db.fileName) fileName=db.fileName;
-    render();
-    return;
-  }
-  let changed=false;
-  people.forEach(p=>{
-    const remote=db.presenze[p.name];
-    if(remote!==undefined && remote!==p.present){
-      if(flash) flashRow(p.id, remote);
-      p.present=remote;
-      changed=true;
-    }
-  });
-  if(changed) render();
-}
-
-// Build DB object from current state
+// ════════════════════════════════════════
+//  GITHUB DB
+// ════════════════════════════════════════
 function buildDb(){
   const presenze={};
   people.forEach(p=>{ presenze[p.name]=p.present; });
-  return {
-    lastUpdate: new Date().toISOString(),
-    fileName,
-    nomi: people.map(p=>p.name),
-    presenze
-  };
+  return { v:1, lastUpdate:new Date().toISOString(), fileName, nomi:people.map(p=>p.name), presenze };
 }
 
-// Save db.json to GitHub
-async function saveToGitHub(force=false){
-  if(!ghMode) return;
+function encodeContent(obj){
+  return btoa(unescape(encodeURIComponent(JSON.stringify(obj,null,2))));
+}
+
+async function loadFromGitHub(){
+  setLoading('LETTURA DATABASE…');
+  try{
+    const res = await fetch(GH_API, { headers: GH_HDR });
+    if(res.status === 404){
+      // db.json non esiste → crealo con i dati default
+      setLoading('PRIMO AVVIO — CREAZIONE DATABASE…');
+      loadDefaultSilent();
+      await writeToGitHub(true);
+      return true;
+    }
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    dbSha = data.sha;
+    lastEtag = res.headers.get('etag')||'';
+    const db = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g,'')))));
+    applyDb(db);
+    return true;
+  } catch(e){
+    showLoadingError('Errore connessione GitHub:\n'+e.message+'\n\nVerifica che il repository esista e che GitHub Pages sia abilitato.');
+    return false;
+  }
+}
+
+async function writeToGitHub(force=false){
   if(isSaving && !force) return;
   isSaving=true;
-  setStatus('syncing','Salvataggio…',`${GH.user}/${GH.repo}`);
+  setStatus('spin','Salvataggio…');
   try{
-    const content=btoa(unescape(encodeURIComponent(JSON.stringify(buildDb(),null,2))));
-    const body={ message:'EVAC update '+new Date().toISOString(), content };
-    if(dbSha) body.sha=dbSha;
-    const res=await ghApi('contents/db.json',{ method:'PUT', body:JSON.stringify(body) });
-    if(res.ok){
-      const data=await res.json();
-      dbSha=data.content.sha;
-      setStatus('ok','Salvato su GitHub',`${GH.user}/${GH.repo}`);
-    } else {
-      const err=await res.json();
-      // Conflict: fetch latest SHA and retry
-      if(res.status===409||res.status===422){
-        await refreshSha();
-        isSaving=false;
-        await saveToGitHub(true);
-        return;
-      }
-      throw new Error(err.message||'HTTP '+res.status);
+    const body = { message:'EVAC '+new Date().toISOString(), content:encodeContent(buildDb()) };
+    if(dbSha) body.sha = dbSha;
+    const res = await fetch(GH_API, { method:'PUT', headers:GH_HDR, body:JSON.stringify(body) });
+    if(res.status===409||res.status===422){
+      // Conflitto SHA → rileggi e riprova
+      await refreshSha();
+      isSaving=false;
+      await writeToGitHub(true);
+      return;
     }
+    if(!res.ok){ const e=await res.json(); throw new Error(e.message||'HTTP '+res.status); }
+    const data=await res.json();
+    dbSha=data.content.sha;
+    setStatus('ok','Salvato');
   } catch(e){
-    setStatus('err','Errore salvataggio: '+e.message);
+    setStatus('err','Errore: '+e.message);
     toast('Errore salvataggio: '+e.message,'err');
   }
   isSaving=false;
@@ -727,49 +514,77 @@ async function saveToGitHub(force=false){
 
 async function refreshSha(){
   try{
-    const res=await ghApi('contents/db.json');
+    const res=await fetch(GH_API,{headers:GH_HDR});
     if(res.ok){ const d=await res.json(); dbSha=d.sha; }
   } catch(e){}
 }
 
-// ─────────────────────────────────
-// POLLING (read remote changes)
-// ─────────────────────────────────
+// ════════════════════════════════════════
+//  POLLING — legge remote ogni 5s
+// ════════════════════════════════════════
 function startPolling(){
   if(pollTimer) clearInterval(pollTimer);
-  pollTimer=setInterval(poll, 5000);
+  pollTimer=setInterval(poll,5000);
 }
-
 async function poll(){
-  if(!ghMode||isSaving) return;
+  if(isSaving) return;
   try{
-    const res=await ghApi('contents/db.json');
+    const res=await fetch(GH_API,{headers:GH_HDR});
     if(!res.ok) return;
     const data=await res.json();
-    if(data.sha===dbSha) return; // no change
+    if(data.sha===dbSha) return;          // nessuna modifica
     dbSha=data.sha;
-    const db=JSON.parse(atob(data.content.replace(/\n/g,'')));
-    applyDb(db, true); // true = flash changed rows
-    setStatus('ok','Aggiornato da remoto',`${GH.user}/${GH.repo}`);
+    const db=JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g,'')))));
+    applyDb(db, true);
+    setStatus('ok','Aggiornato da remoto');
   } catch(e){}
 }
 
-// ─────────────────────────────────
-// LOAD DEFAULT
-// ─────────────────────────────────
-function loadDefault(){
-  people=DEFAULT_NAMES.map((name,i)=>({id:i,name,present:!DEFAULT_ABSENT.has(name)}));
-  fileName='Lista predefinita (EVAC.xlsx)';
-  filter='all'; search='';
-  document.getElementById('search').value='';
-  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelector('[data-filter="all"]').classList.add('active');
-  render(); alarm();
+function applyDb(db, flash=false){
+  if(!db||!db.presenze) return;
+  if(db.nomi && db.nomi.length>0 && db.nomi.join()!==people.map(p=>p.name).join()){
+    people=db.nomi.map((name,i)=>({id:i,name,present:db.presenze[name]!==undefined?db.presenze[name]:true}));
+    if(db.fileName) fileName=db.fileName;
+    render(); return;
+  }
+  let changed=false;
+  people.forEach(p=>{
+    const r=db.presenze[p.name];
+    if(r!==undefined && r!==p.present){
+      if(flash) flashRow(p.id,r);
+      p.present=r; changed=true;
+    }
+  });
+  if(changed) render();
 }
 
-// ─────────────────────────────────
-// EXCEL UPLOAD
-// ─────────────────────────────────
+// ════════════════════════════════════════
+//  DEFAULT DATA (silent — no alarm)
+// ════════════════════════════════════════
+function loadDefaultSilent(){
+  people=DEFAULT_NAMES.map((name,i)=>({id:i,name,present:!DEFAULT_ABSENT.has(name)}));
+  fileName='Lista predefinita (EVAC.xlsx)';
+  render();
+}
+
+// ════════════════════════════════════════
+//  LOADING SCREEN
+// ════════════════════════════════════════
+function hideLoading(){ document.getElementById('loadingScreen').style.display='none'; }
+function showLoadingError(msg){
+  document.getElementById('loadingMsg').style.display='none';
+  document.querySelector('.loading-bar-wrap').style.display='none';
+  const el=document.getElementById('loadingError');
+  el.style.display='block';
+  el.innerHTML=msg.replace(/\n/g,'<br>')+
+    `<br><br><button onclick="location.reload()" style="background:var(--accent);border:none;
+    border-radius:6px;color:#fff;font-family:var(--mono);font-size:0.72rem;letter-spacing:1px;
+    padding:8px 20px;cursor:pointer;margin-top:8px">↺ RIPROVA</button>`;
+}
+
+// ════════════════════════════════════════
+//  EXCEL UPLOAD
+// ════════════════════════════════════════
 const fileInput=document.getElementById('fileInput');
 document.getElementById('uploadBtn').addEventListener('click',()=>fileInput.click());
 document.getElementById('dropZone').addEventListener('click',()=>fileInput.click());
@@ -824,45 +639,38 @@ function parseExcel(file){
       document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
       document.querySelector('[data-filter="all"]').classList.add('active');
       render(); alarm();
-      toast('✓ '+names.length+' dipendenti caricati.','ok');
-      if(ghMode) await saveToGitHub(true);
+      toast('✓ '+names.length+' dipendenti caricati da "'+file.name+'".','ok');
+      clearTimeout(saveTimer); saveTimer=setTimeout(()=>writeToGitHub(true),800);
     } catch(err){toast('Errore: '+err.message,'err');}
   };
   reader.readAsArrayBuffer(file);
 }
 
-// ─────────────────────────────────
-// TOGGLE
-// ─────────────────────────────────
-let saveTimer=null;
+// ════════════════════════════════════════
+//  TOGGLE
+// ════════════════════════════════════════
 function togglePerson(id){
   const p=people.find(x=>x.id===id);
   if(!p) return;
   p.present=!p.present;
   render();
-  if(ghMode){
-    // debounce: batch rapid toggles into one save
-    clearTimeout(saveTimer);
-    saveTimer=setTimeout(()=>saveToGitHub(),800);
-  }
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>writeToGitHub(),600);
 }
 
-// ─────────────────────────────────
-// STATS & RENDER
-// ─────────────────────────────────
+// ════════════════════════════════════════
+//  STATS & RENDER
+// ════════════════════════════════════════
 function updateStats(){
-  const total=people.length;
-  const present=people.filter(p=>p.present).length;
-  const missing=total-present;
-  const pct=total>0?Math.round((present/total)*100):0;
+  const total=people.length, present=people.filter(p=>p.present).length;
+  const missing=total-present, pct=total>0?Math.round((present/total)*100):0;
   document.getElementById('stTotal').textContent=total;
   document.getElementById('stPresent').textContent=present;
   document.getElementById('stMissing').textContent=missing;
   document.getElementById('stPct').textContent=pct+'%';
   document.getElementById('progPct').textContent=pct+'%';
   const color=pct>=90?'var(--safe)':pct>=70?'var(--accent2)':'var(--accent)';
-  const fill=document.getElementById('progFill');
-  fill.style.width=pct+'%'; fill.style.background=color;
+  document.getElementById('progFill').style.cssText=`width:${pct}%;background:${color}`;
   document.getElementById('progPct').style.color=color;
 }
 
@@ -897,9 +705,9 @@ function render(){
   updateStats();
 }
 
-// ─────────────────────────────────
-// FILTERS
-// ─────────────────────────────────
+// ════════════════════════════════════════
+//  FILTERS
+// ════════════════════════════════════════
 document.querySelectorAll('.filter-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{
     filter=btn.dataset.filter;
@@ -916,12 +724,12 @@ document.getElementById('resetBtn').addEventListener('click',async()=>{
   document.querySelector('[data-filter="all"]').classList.add('active');
   render(); alarm();
   toast('Appello azzerato — tutti presenti.','warn');
-  if(ghMode) await saveToGitHub(true);
+  clearTimeout(saveTimer); saveTimer=setTimeout(()=>writeToGitHub(true),600);
 });
 
-// ─────────────────────────────────
-// PRINT
-// ─────────────────────────────────
+// ════════════════════════════════════════
+//  PRINT
+// ════════════════════════════════════════
 document.getElementById('printBtn').addEventListener('click',()=>{
   if(people.length===0){toast('Nessun dato da stampare.','warn');return;}
   const absent=people.filter(p=>!p.present);
@@ -932,35 +740,27 @@ document.getElementById('printBtn').addEventListener('click',()=>{
   const ds=now.toLocaleDateString('it-IT',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const ts=now.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('phDate').textContent=`Data: ${ds}  —  Ora: ${ts}`;
-  document.getElementById('phSrc').textContent=`Fonte: ${fileName}${ghMode?'  |  DB: GitHub ('+GH.user+'/'+GH.repo+')':'  |  DB: Offline'}`;
+  document.getElementById('phSrc').textContent=`Fonte: ${fileName}  |  DB: github.com/${GH_USER}/${GH_REPO}`;
   document.getElementById('pfTime').textContent=`Stampato il ${ds} alle ${ts}`;
-  const sv=filter,ss=search;
-  filter='all';search='';
+  const sv=filter,ss=search; filter='all';search='';
   document.getElementById('personList').innerHTML=people.map((p,i)=>rowHTML(p,i)).join('');
-  updateStats();
-  window.print();
+  updateStats(); window.print();
   setTimeout(()=>{filter=sv;search=ss;document.getElementById('search').value=ss;render();},800);
 });
 
-// ─────────────────────────────────
-// INIT
-// ─────────────────────────────────
-loadDefault();
-
-// Try auto-connect from saved config
-const saved=loadCfg();
-if(saved&&saved.user&&saved.repo&&saved.token){
-  GH=saved;
-  document.getElementById('ghUser').value=saved.user;
-  document.getElementById('ghRepo').value=saved.repo;
-  document.getElementById('ghToken').value=saved.token;
-  // Auto-connect silently
-  initGitHub().then(()=>{
-    document.getElementById('setupModal').classList.add('hidden');
-  });
-} else {
-  openSetup();
-}
+// ════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════
+(async()=>{
+  loadDefaultSilent(); // mostra subito la lista mentre si connette
+  const ok = await loadFromGitHub();
+  if(ok){
+    hideLoading();
+    setStatus('ok','Database GitHub connesso');
+    alarm();
+    startPolling();
+  }
+})();
 </script>
 </body>
 </html>
